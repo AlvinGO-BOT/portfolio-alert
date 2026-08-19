@@ -1,10 +1,10 @@
 {
-  "version": "2.1",
+  "version": "2.2",
   "updated_at": "2026-08-20",
   "fx": {
     "USDCNY": 6.7569,
     "HKDCNY": 0.8614,
-    "updated_at": "2026-08-20 00:22",
+    "updated_at": "2026-08-19 23:12",
     "note": "云端自动化运行时通过 open.er-api.com 更新"
   },
   "alert_schedule": {
@@ -90,11 +90,11 @@
       "name": "斯瑞新材",
       "market": "A股",
       "cost_price": 37.12,
-      "quantity": 1350,
+      "quantity": 0,
       "strategy_type": "swing_small",
       "peak_price": 40.36,
       "buy_reason": "",
-      "note": "科创板中小市值，波动大"
+      "note": "已清仓：2026-08-19卖出1350股@36.57，亏损-742.50元(-1.48%)"
     },
     {
       "code": "usMSFT.OQ",
@@ -104,7 +104,7 @@
       "cost_price": 402.54,
       "quantity": 1,
       "strategy_type": "ma20_trail",
-      "peak_price": 487.93,
+      "peak_price": 484.86,
       "buy_reason": "",
       "note": "科技龙头，8/17已减仓1股止盈，剩余1股移动成本402.54，切换MA20移动止盈"
     },
