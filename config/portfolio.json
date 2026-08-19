@@ -1,0 +1,124 @@
+{
+  "version": "2.1",
+  "updated_at": "2026-08-19",
+  "fx": {
+    "USDCNY": 6.7569,
+    "HKDCNY": 0.8614,
+    "updated_at": "2026-08-19 23:12",
+    "note": "云端自动化运行时通过 open.er-api.com 更新"
+  },
+  "alert_schedule": {
+    "morning": "08:00",
+    "noon": "12:00",
+    "evening": "18:00"
+  },
+  "mobile_site": {
+    "url": "https://b1bd03bb30aa49ca9bf37acfb50a1531.app.workbuddy.link",
+    "dir": "reports/site",
+    "note": "每日三次更新后重新部署，手机浏览器直接访问"
+  },
+  "strategies": {
+    "swing_small": {
+      "type": "swing_small",
+      "desc": "震荡小票：阶梯止盈10%/20%/30%分批，止损-10%",
+      "stop_loss_pct": -10.0,
+      "take_profit": {
+        "mode": "ladder",
+        "levels": [
+          {
+            "pct": 10.0,
+            "action": "sell_1_3",
+            "note": "浮盈10%卖1/3"
+          },
+          {
+            "pct": 20.0,
+            "action": "sell_1_3",
+            "note": "浮盈20%再卖1/3"
+          },
+          {
+            "pct": 30.0,
+            "action": "sell_rest",
+            "note": "浮盈30%卖出剩余"
+          }
+        ]
+      },
+      "trailing_stop_ma": 20,
+      "peak_drawdown_clear_pct": 10.0,
+      "technical_reduce": true
+    },
+    "trend_leader": {
+      "type": "trend_leader",
+      "desc": "趋势赛道/主线龙头：浮盈20%减仓50%，止损-10%",
+      "stop_loss_pct": -10.0,
+      "take_profit": {
+        "mode": "half",
+        "pct": 20.0,
+        "action": "sell_half",
+        "note": "浮盈20%减仓50%，剩余跟随趋势"
+      },
+      "trailing_stop_ma": 20,
+      "peak_drawdown_clear_pct": 10.0,
+      "technical_reduce": true
+    },
+    "ma20_trail": {
+      "type": "ma20_trail",
+      "desc": "MA20移动止盈(减仓后剩余仓位)：跟随趋势不设固定止盈，跌破MA20即止盈离场",
+      "stop_loss_pct": -10.0,
+      "take_profit": {
+        "mode": "trail"
+      },
+      "trailing_stop_ma": 20,
+      "peak_drawdown_clear_pct": 10.0,
+      "technical_reduce": false,
+      "note": "已执行过减仓50%后的剩余仓位专用；高位形态信号仅作预警不再二次减仓"
+    }
+  },
+  "positions": [
+    {
+      "code": "sz002384",
+      "name": "东山精密",
+      "market": "A股",
+      "cost_price": 188.41,
+      "quantity": 300,
+      "strategy_type": "trend_leader",
+      "peak_price": 217.66,
+      "buy_reason": "",
+      "note": "PCB/算力主线龙头，市值3986亿"
+    },
+    {
+      "code": "sh688102",
+      "name": "斯瑞新材",
+      "market": "A股",
+      "cost_price": 37.12,
+      "quantity": 1350,
+      "strategy_type": "swing_small",
+      "peak_price": 40.36,
+      "buy_reason": "",
+      "note": "科创板中小市值，波动大"
+    },
+    {
+      "code": "usMSFT.OQ",
+      "name": "微软",
+      "market": "美股",
+      "currency": "USD",
+      "cost_price": 402.54,
+      "quantity": 1,
+      "strategy_type": "ma20_trail",
+      "peak_price": 484.86,
+      "buy_reason": "",
+      "note": "科技龙头，8/17已减仓1股止盈，剩余1股移动成本402.54，切换MA20移动止盈"
+    },
+    {
+      "code": "usAMD.OQ",
+      "name": "超威半导体",
+      "market": "美股",
+      "currency": "USD",
+      "cost_price": 490.25,
+      "quantity": 1,
+      "strategy_type": "trend_leader",
+      "peak_price": 479.93,
+      "buy_reason": "",
+      "note": "AI芯片龙头，2026年YTD涨幅+124%，PE 123"
+    }
+  ]
+}
