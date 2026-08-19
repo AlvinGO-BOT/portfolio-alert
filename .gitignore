@@ -1,0 +1,7 @@
+# 行情数据与个股报告每次重新生成, 不入库
+reports/data_*
+reports/report_*
+# 本地运行产物
+__pycache__/
+*.pyc
+.DS_Store
