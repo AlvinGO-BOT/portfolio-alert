@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>持仓组合 · 2026-08-19 盘后复盘</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:#eef1f5; font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; font-size:15px; color:#222; }
+  .wrap { max-width:520px; margin:0 auto; padding:12px 12px 40px; }
+  .topbar { position:sticky; top:0; z-index:10; background:linear-gradient(135deg,#1a1a2e,#16213e); color:#fff; border-radius:0 0 16px 16px; padding:16px 18px 14px; margin:-12px -12px 14px; box-shadow:0 2px 10px rgba(0,0,0,0.2); }
+  .topbar h1 { margin:0; font-size:19px; font-weight:800; letter-spacing:0.5px; }
+  .topbar .sub { font-size:12px; color:rgba(255,255,255,0.65); margin-top:3px; }
+  .topbar .chips { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .chip { background:rgba(255,255,255,0.14); padding:3px 10px; border-radius:10px; font-size:11px; color:rgba(255,255,255,0.85); }
+  .asset-card { background:linear-gradient(135deg,#1565c0,#0d47a1); border-radius:14px; padding:16px 18px; color:#fff; margin-bottom:14px; box-shadow:0 3px 12px rgba(13,71,161,0.25); }
+  .asset-card .lbl { font-size:11px; color:rgba(255,255,255,0.7); }
+  .asset-card .big { font-size:26px; font-weight:800; margin-top:2px; }
+  .asset-card .grid { display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.18); }
+  .asset-card .grid div { text-align:center; flex:1; }
+  .asset-card .grid .v { font-size:16px; font-weight:700; }
+  .asset-card .grid .k { font-size:10px; color:rgba(255,255,255,0.65); margin-top:2px; }
+  .sec-title { font-size:13px; font-weight:700; color:#444; margin:16px 0 8px; padding-left:10px; border-left:3px solid #1565c0; }
+  .strip { display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none; }
+  .strip::-webkit-scrollbar { display:none; }
+  .cards { display:flex; flex-direction:column; gap:14px; }
+  .cards section { max-width:100% !important; margin:0 !important; box-shadow:0 2px 10px rgba(0,0,0,0.10) !important; }
+  .cards section section { box-shadow:none !important; }
+  .history { display:none; }
+  .footer { text-align:center; padding:18px 10px 6px; font-size:11px; color:#9aa; line-height:1.7; }
+  .refresh-btn { position:fixed; right:16px; bottom:22px; z-index:20; background:#1565c0; color:#fff; border:none; border-radius:50%; width:52px; height:52px; font-size:20px; box-shadow:0 4px 14px rgba(21,101,192,0.45); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  
+  .trade-fab{position:fixed;right:16px;bottom:82px;z-index:20;background:linear-gradient(135deg,#e65100,#f57c00);color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:22px;box-shadow:0 4px 14px rgba(230,81,0,0.45);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .trade-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;justify-content:center;align-items:flex-end;}
+  .trade-overlay.active{display:flex;}
+  .trade-modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:20px 18px 34px;-webkit-animation:slideUp .3s ease;animation:slideUp .3s ease;}
+  @-webkit-keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .trade-modal h2{margin:0 0 16px;font-size:18px;font-weight:800;color:#1a1a2e;display:flex;justify-content:space-between;align-items:center;}
+  .trade-close{background:none;border:none;font-size:22px;color:#999;cursor:pointer;padding:0;line-height:1;}
+  .ts{margin-bottom:16px;}
+  .tl{font-size:13px;font-weight:600;color:#555;margin-bottom:8px;display:block;}
+  .pos-list{display:flex;flex-direction:column;gap:8px;}
+  .pos-opt{display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:all .2s;}
+  .pos-opt.selected{border-color:#1565c0;background:#e3f2fd;}
+  .pos-opt .pn{font-size:15px;font-weight:700;color:#222;}
+  .pos-opt .pi{font-size:11px;color:#999;margin-top:2px;}
+  .act-toggle{display:flex;gap:8px;}
+  .act-btn{flex:1;padding:12px;border:2px solid #e0e0e0;border-radius:12px;background:#fff;font-size:15px;font-weight:600;cursor:pointer;text-align:center;color:#666;transition:all .2s;}
+  .act-btn.selected.buy{border-color:#e53935;background:#ffebee;color:#c62828;}
+  .act-btn.selected.sell{border-color:#43a047;background:#e8f5e9;color:#2e7d32;}
+  .ti{width:100%;padding:14px 16px;border:2px solid #e0e0e0;border-radius:12px;font-size:16px;font-weight:600;color:#222;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none;}
+  .ti:focus{border-color:#1565c0;}
+  .ti::placeholder{color:#ccc;font-weight:400;}
+  .trade-submit{width:100%;padding:16px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;margin-top:8px;box-shadow:0 3px 12px rgba(13,71,161,0.3);}
+  .trade-result{display:none;margin-top:16px;padding:16px;background:#f5f7fa;border-radius:12px;border:1px solid #e0e0e0;}
+  .trade-result.active{display:block;}
+  .rs-sig{text-align:center;padding:12px;border-radius:10px;margin:0 0 12px;font-size:18px;font-weight:800;}
+  .rs-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:14px;}
+  .rs-row:last-child{border-bottom:none;}
+  .rs-l{color:#666;}
+  .rs-v{font-weight:700;color:#222;}
+  .sync-btn{display:block;width:100%;padding:14px;margin-top:10px;border:2px solid #1565c0;border-radius:10px;background:#1565c0;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;}
+  .sync-btn:active{transform:scale(0.98);}
+  .sync-btn.copied{background:#2e7d32;border-color:#2e7d32;color:#fff;}
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;z-index:10001;opacity:0;transition:opacity .3s;pointer-events:none;}
+  .toast.show{opacity:1;}
+  .trade-note{font-size:11px;color:#999;margin-top:10px;line-height:1.6;text-align:center;}
+
+  @media (min-width:521px) {
+    body { background:#dde3ea; }
+    .wrap { box-shadow:0 0 24px rgba(0,0,0,0.10); background:#eef1f5; min-height:100vh; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>📈 持仓组合监控</h1>
+    <div class="sub">2026-08-19 盘后复盘(18:00) · 共4只持仓 · 更新 2026-08-19 23:12</div>
+    <div class="chips">
+      <span class="chip">🟢持有</span><span class="chip">🟡减仓50%</span><span class="chip">🔴止损/清仓</span>
+    </div>
+  </div>
+
+  <div class="asset-card">
+    <div class="lbl">持仓总市值 / 总成本（折算人民币）</div>
+    <div class="big" id="total-mkt" style="color:#e53935;">¥114,908.50</div>
+    <div id="total-cost" style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:2px;">总成本 ¥112,667.49</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;">A股/人民币 ¥108,486 · USD $950.51 ≈ ¥6,423</div>
+    <div class="grid">
+      <div><div class="v" id="total-pnl" style="color:#e53935;">+2,241.01</div><div class="k">累计盈亏(¥)</div></div>
+      <div><div class="v" id="total-pnl-pct" style="color:#e53935;">+1.99%</div><div class="k">收益率</div></div>
+      <div><div class="v">4</div><div class="k">持仓数</div></div>
+    </div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.55);margin-top:8px;">汇率 USDCNY 6.7569 · HKDCNY 0.8614（2026-08-19 23:12）</div>
+  </div>
+
+  <div class="sec-title">⚡ 今日信号</div>
+  <div class="strip"><div style="flex:0 0 auto;min-width:145px;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid #f9a825;"><div style="font-size:13px;font-weight:700;color:#222;">斯瑞新材</div><div style="font-size:11px;color:#999;margin-top:1px;">sh688102 · A股</div><div style="font-size:15px;font-weight:800;color:#f9a825;margin-top:6px;">🟡观望</div><div style="font-size:11px;color:#666;margin-top:3px;">浮盈 <b style="color:#43a047;">-1.51%</b></div><div style="font-size:11px;color:#666;margin-top:2px;">持仓 <b style="color:#333;">¥49,356</b></div><div style="font-size:11px;color:#666;margin-top:2px;">盈亏 <b style="color:#43a047;">-¥756</b></div></div><div style="flex:0 0 auto;min-width:145px;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid #f9a825;"><div style="font-size:13px;font-weight:700;color:#222;">东山精密</div><div style="font-size:11px;color:#999;margin-top:1px;">sz002384 · A股</div><div style="font-size:15px;font-weight:800;color:#f9a825;margin-top:6px;">🟡减仓50%</div><div style="font-size:11px;color:#666;margin-top:3px;">浮盈 <b style="color:#e53935;">+4.61%</b></div><div style="font-size:11px;color:#666;margin-top:2px;">持仓 <b style="color:#333;">¥59,130</b></div><div style="font-size:11px;color:#666;margin-top:2px;">盈亏 <b style="color:#e53935;">+¥2,607</b></div></div><div style="flex:0 0 auto;min-width:145px;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid #f9a825;"><div style="font-size:13px;font-weight:700;color:#222;">超威半导体</div><div style="font-size:11px;color:#999;margin-top:1px;">usAMD.OQ · 美股</div><div style="font-size:15px;font-weight:800;color:#f9a825;margin-top:6px;">🟡观望</div><div style="font-size:11px;color:#666;margin-top:3px;">浮盈 <b style="color:#43a047;">-5.02%</b></div><div style="font-size:11px;color:#666;margin-top:2px;">持仓 <b style="color:#333;">$466<span style='color:#bbb;'>≈¥3,146</span></b></div><div style="font-size:11px;color:#666;margin-top:2px;">盈亏 <b style="color:#43a047;">-$25<span style='color:#bbb;'>≈-¥166</span></b></div></div><div style="flex:0 0 auto;min-width:145px;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:3px solid #2e7d32;"><div style="font-size:13px;font-weight:700;color:#222;">微软</div><div style="font-size:11px;color:#999;margin-top:1px;">usMSFT.OQ · 美股</div><div style="font-size:15px;font-weight:800;color:#2e7d32;margin-top:6px;">🟢持有</div><div style="font-size:11px;color:#666;margin-top:3px;">浮盈 <b style="color:#e53935;">+20.45%</b></div><div style="font-size:11px;color:#666;margin-top:2px;">持仓 <b style="color:#333;">$485<span style='color:#bbb;'>≈¥3,276</span></b></div><div style="font-size:11px;color:#666;margin-top:2px;">盈亏 <b style="color:#e53935;">+$82<span style='color:#bbb;'>≈+¥556</span></b></div></div></div>
+
+  <div class="sec-title">📋 个股详情</div>
+  <div class="cards"><section style="max-width:480px;margin:0 auto;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.12);border:1px solid #eee;">
+  <section style="background:linear-gradient(135deg,#546e7a,#1a1a2e);color:white;padding:18px 20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <h1 style="margin:0;font-size:18px;font-weight:700;">📊 斯瑞新材 持仓提示</h1>
+        <p style="margin:3px 0 0;font-size:11px;color:rgba(255,255,255,0.7);">sh688102 · A股 · 持仓1350股 · 市值285.56亿</p>
+      </div>
+      <span style="background:rgba(255,255,255,0.2);padding:3px 12px;border-radius:12px;font-size:12px;white-space:nowrap;">置信度50%</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <p style="margin:0;font-size:16px;font-weight:700;">🟡观望</p>
+      <span style="background:rgba(255,255,255,0.15);padding:2px 10px;border-radius:10px;font-size:11px;">策略:震荡小票</span>
+    </div>
+    <p style="margin:4px 0 0;font-size:11px;color:rgba(255,255,255,0.75);">↓下降 · MACD金叉/红柱 · 峰值回撤-9.4%</p>
+  </section>
+  <section style="padding:16px 16px 12px;background:#fff;">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
+      <span style="font-size:26px;font-weight:800;color:#43a047;">36.56</span>
+      <span style="font-size:14px;color:#43a047;">-8.60%</span>
+      <span style="font-size:12px;color:#999;">成本 37.12</span>
+      <span style="font-size:13px;font-weight:600;color:#43a047;margin-left:auto;">-1.51%</span>
+    </div>
+    <div style="font-size:11px;color:#666;margin:-6px 0 10px;">持仓市值 <b style="color:#333;">¥49,356.00</b> · 盈亏 <b style="color:#43a047;">-¥756.00</b></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-8.60%</div>
+        <div style="font-size:10px;color:#999;">1日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#e53935;">+1.67%</div>
+        <div style="font-size:10px;color:#999;">5日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#e53935;">+30.85%</div>
+        <div style="font-size:10px;color:#999;">20日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-2739.86万</div>
+        <div style="font-size:10px;color:#999;">主力净流入</div>
+      </div>
+    </div>
+    
+    <div style="background:#eceff1;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <strong style="font-size:13px;color:#546e7a;">🎯 信号依据</strong>
+      <p style="margin:5px 0 0;font-size:12px;color:#444;line-height:1.6;"></p>
+      <p style="margin:4px 0 0;font-size:11px;color:#777;">仅站上1/4条均线(MA20=32.93) · 主力5日-3655.24万 · 量比1.9 · 换手6.2%</p>
+      <p style='margin:4px 0 0;font-size:11px;color:#777;'>PE(TTM) 180.3 · PB 14.49 · 估值偏高需注意</p>
+    </div>
+    <div style="background:#fafafa;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <strong style="font-size:12px;color:#666;">🛡️ 止盈止损参考</strong>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;">
+        <div style="flex:1;"><span style="font-size:12px;color:#c62828;">静态止损</span><br><span style="font-size:15px;font-weight:700;color:#c62828;">33.41</span><br><span style="font-size:10px;color:#999;">成本-10%</span></div>
+        <div style="flex:1;text-align:center;"><span style="font-size:12px;color:#e65100;">移动止损</span><br><span style="font-size:15px;font-weight:700;color:#e65100;">33.41</span><br><span style="font-size:10px;color:#999;">MA20</span></div>
+        <div style="flex:1;text-align:right;"><span style="font-size:12px;color:#2e7d32;">止盈</span><br><span style="font-size:15px;font-weight:700;color:#2e7d32;">40.83</span><br><span style="font-size:10px;color:#999;">40.83 (+10%)</span></div>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ddd;font-size:11px;color:#777;">
+        盈亏比 1.4:1 · 峰值跟踪 40.36(回撤-9.4%) · MA20=32.93 · MA60=37.13
+      </div>
+    </div>
+    <div style="background:#eceff1;border-radius:8px;padding:12px;">
+      <strong style="font-size:13px;color:#546e7a;">💡 操作建议</strong>
+      <p style="margin:5px 0 0;font-size:12px;color:#444;line-height:1.6;"><strong>观望等待</strong>：。等待方向选择：放量站上MA20确认后持有，跌破静态止损价立即离场。</p>
+    </div>
+  </section>
+  <footer style="text-align:center;padding:10px;font-size:10px;color:#999;background:#fafafa;">
+    数据来自腾讯自选股 · 2026-08-19 23:12 | 仅供参考，不构成投资建议 | 本分析由通达信AI智能体生成
+  </footer>
+</section><section style="max-width:480px;margin:0 auto;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.12);border:1px solid #eee;">
+  <section style="background:linear-gradient(135deg,#f9a825,#1a1a2e);color:white;padding:18px 20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <h1 style="margin:0;font-size:18px;font-weight:700;">📊 东山精密 持仓提示</h1>
+        <p style="margin:3px 0 0;font-size:11px;color:rgba(255,255,255,0.7);">sz002384 · A股 · 持仓300股 · 市值3610.10亿</p>
+      </div>
+      <span style="background:rgba(255,255,255,0.2);padding:3px 12px;border-radius:12px;font-size:12px;white-space:nowrap;">置信度72%</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <p style="margin:0;font-size:16px;font-weight:700;">🟡减仓50%</p>
+      <span style="background:rgba(255,255,255,0.15);padding:2px 10px;border-radius:10px;font-size:11px;">策略:趋势龙头</span>
+    </div>
+    <p style="margin:4px 0 0;font-size:11px;color:rgba(255,255,255,0.75);">↓下降 · MACD金叉/红柱 · 峰值回撤-9.4%</p>
+  </section>
+  <section style="padding:16px 16px 12px;background:#fff;">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
+      <span style="font-size:26px;font-weight:800;color:#e53935;">197.10</span>
+      <span style="font-size:14px;color:#43a047;">-7.82%</span>
+      <span style="font-size:12px;color:#999;">成本 188.41</span>
+      <span style="font-size:13px;font-weight:600;color:#e53935;margin-left:auto;">+4.61%</span>
+    </div>
+    <div style="font-size:11px;color:#666;margin:-6px 0 10px;">持仓市值 <b style="color:#333;">¥59,130.00</b> · 盈亏 <b style="color:#e53935;">+¥2,607.00</b></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-7.82%</div>
+        <div style="font-size:10px;color:#999;">1日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-1.54%</div>
+        <div style="font-size:10px;color:#999;">5日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-9.38%</div>
+        <div style="font-size:10px;color:#999;">20日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-7.17亿</div>
+        <div style="font-size:10px;color:#999;">主力净流入</div>
+      </div>
+    </div>
+    <div style="background:#ffebee;border:1px solid #ffcdd2;border-radius:6px;padding:5px 8px;margin-bottom:6px;font-size:11px;color:#b71c1c;">⚠️双顶形态(高点224.03/219.85,差1.9%)</div>
+    <div style="background:#fff8e1;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <strong style="font-size:13px;color:#f9a825;">🎯 信号依据</strong>
+      <p style="margin:5px 0 0;font-size:12px;color:#444;line-height:1.6;">⚠️双顶形态(高点224.03/219.85,差1.9%)；高位技术见顶信号，无需等回撤标准，直接减仓50%</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#777;">仅站上1/4条均线(MA20=192.55) · 主力5日-12.15亿 · 量比1.1 · 换手5.3%</p>
+      <p style='margin:4px 0 0;font-size:11px;color:#777;'>PE(TTM) 177.0 · PB 15.95 · 估值偏高需注意</p>
+    </div>
+    <div style="background:#fafafa;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <strong style="font-size:12px;color:#666;">🛡️ 止盈止损参考</strong>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;">
+        <div style="flex:1;"><span style="font-size:12px;color:#c62828;">静态止损</span><br><span style="font-size:15px;font-weight:700;color:#c62828;">169.57</span><br><span style="font-size:10px;color:#999;">成本-10%</span></div>
+        <div style="flex:1;text-align:center;"><span style="font-size:12px;color:#e65100;">移动止损</span><br><span style="font-size:15px;font-weight:700;color:#e65100;">192.55</span><br><span style="font-size:10px;color:#999;">MA20</span></div>
+        <div style="flex:1;text-align:right;"><span style="font-size:12px;color:#2e7d32;">止盈</span><br><span style="font-size:15px;font-weight:700;color:#2e7d32;">226.09</span><br><span style="font-size:10px;color:#999;">226.09 (+20%)</span></div>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ddd;font-size:11px;color:#777;">
+        盈亏比 1.1:1 · 峰值跟踪 217.66(回撤-9.4%) · MA20=192.55 · MA60=222.66
+      </div>
+    </div>
+    <div style="background:#fff8e1;border-radius:8px;padding:12px;">
+      <strong style="font-size:13px;color:#f9a825;">💡 操作建议</strong>
+      <p style="margin:5px 0 0;font-size:12px;color:#444;line-height:1.6;"><strong>减仓50%</strong>：⚠️双顶形态(高点224.03/219.85,差1.9%)；高位技术见顶信号，无需等回撤标准，直接减仓50%。剩余仓位移动止损保护(MA20=192.55)，跌破即离场。</p>
+    </div>
+  </section>
+  <footer style="text-align:center;padding:10px;font-size:10px;color:#999;background:#fafafa;">
+    数据来自腾讯自选股 · 2026-08-19 23:12 | 仅供参考，不构成投资建议 | 本分析由通达信AI智能体生成
+  </footer>
+</section><section style="max-width:480px;margin:0 auto;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.12);border:1px solid #eee;">
+  <section style="background:linear-gradient(135deg,#546e7a,#1a1a2e);color:white;padding:18px 20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <h1 style="margin:0;font-size:18px;font-weight:700;">📊 超威半导体 持仓提示</h1>
+        <p style="margin:3px 0 0;font-size:11px;color:rgba(255,255,255,0.7);">usAMD.OQ · 美股 · 持仓1股</p>
+      </div>
+      <span style="background:rgba(255,255,255,0.2);padding:3px 12px;border-radius:12px;font-size:12px;white-space:nowrap;">置信度50%</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <p style="margin:0;font-size:16px;font-weight:700;">🟡观望</p>
+      <span style="background:rgba(255,255,255,0.15);padding:2px 10px;border-radius:10px;font-size:11px;">策略:趋势龙头</span>
+    </div>
+    <p style="margin:4px 0 0;font-size:11px;color:rgba(255,255,255,0.75);">↓下降 · MACD金叉/红柱 · 峰值回撤-3.0%</p>
+  </section>
+  <section style="padding:16px 16px 12px;background:#fff;">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
+      <span style="font-size:26px;font-weight:800;color:#43a047;">$465.65</span>
+      <span style="font-size:14px;color:#43a047;">-3.87%</span>
+      <span style="font-size:12px;color:#999;">成本 $490.25</span>
+      <span style="font-size:13px;font-weight:600;color:#43a047;margin-left:auto;">-5.02%</span>
+    </div>
+    <div style="font-size:11px;color:#666;margin:-6px 0 10px;">持仓市值 <b style="color:#333;">$465.65</b> ≈ ¥3,146 · 盈亏 <b style="color:#43a047;">-$24.60</b> ≈ -¥166（汇率 USD/CNY = 6.7569）</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-3.87%</div>
+        <div style="font-size:10px;color:#999;">1日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-3.55%</div>
+        <div style="font-size:10px;color:#999;">5日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-15.67%</div>
+        <div style="font-size:10px;color:#999;">20日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#e53935;">0元</div>
+        <div style="font-size:10px;color:#999;">主力净流入</div>
+      </div>
+    </div>
+    
+    <div style="background:#eceff1;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <strong style="font-size:13px;color:#546e7a;">🎯 信号依据</strong>
+      <p style="margin:5px 0 0;font-size:12px;color:#444;line-height:1.6;"></p>
+      <p style="margin:4px 0 0;font-size:11px;color:#777;">仅站上0/4条均线(MA20=487.03) · 主力5日0元 · 量比0.4 · 换手0.0%</p>
+      <p style='margin:4px 0 0;font-size:11px;color:#777;'>PE(TTM) 119.4 · PB 0.00 · 估值偏高需注意</p>
+    </div>
+    <div style="background:#fafafa;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <strong style="font-size:12px;color:#666;">🛡️ 止盈止损参考</strong>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;">
+        <div style="flex:1;"><span style="font-size:12px;color:#c62828;">静态止损</span><br><span style="font-size:15px;font-weight:700;color:#c62828;">$441.23</span><br><span style="font-size:10px;color:#999;">成本-10%</span></div>
+        <div style="flex:1;text-align:center;"><span style="font-size:12px;color:#e65100;">移动止损</span><br><span style="font-size:15px;font-weight:700;color:#e65100;">$441.23</span><br><span style="font-size:10px;color:#999;">MA20</span></div>
+        <div style="flex:1;text-align:right;"><span style="font-size:12px;color:#2e7d32;">止盈</span><br><span style="font-size:15px;font-weight:700;color:#2e7d32;">$588.30</span><br><span style="font-size:10px;color:#999;">588.30 (+20%)</span></div>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ddd;font-size:11px;color:#777;">
+        盈亏比 5.0:1 · 峰值跟踪 479.93(回撤-3.0%) · MA20=487.03 · MA60=509.73
+      </div>
+    </div>
+    <div style="background:#eceff1;border-radius:8px;padding:12px;">
+      <strong style="font-size:13px;color:#546e7a;">💡 操作建议</strong>
+      <p style="margin:5px 0 0;font-size:12px;color:#444;line-height:1.6;"><strong>观望等待</strong>：。等待方向选择：放量站上MA20确认后持有，跌破静态止损价立即离场。</p>
+    </div>
+  </section>
+  <footer style="text-align:center;padding:10px;font-size:10px;color:#999;background:#fafafa;">
+    数据来自腾讯自选股 · 2026-08-19 23:12 | 仅供参考，不构成投资建议 | 本分析由通达信AI智能体生成
+  </footer>
+</section><section style="max-width:480px;margin:0 auto;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.12);border:1px solid #eee;">
+  <section style="background:linear-gradient(135deg,#2e7d32,#1a1a2e);color:white;padding:18px 20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <h1 style="margin:0;font-size:18px;font-weight:700;">📊 微软 持仓提示</h1>
+        <p style="margin:3px 0 0;font-size:11px;color:rgba(255,255,255,0.7);">usMSFT.OQ · 美股 · 持仓1股</p>
+      </div>
+      <span style="background:rgba(255,255,255,0.2);padding:3px 12px;border-radius:12px;font-size:12px;white-space:nowrap;">置信度75%</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <p style="margin:0;font-size:16px;font-weight:700;">🟢持有</p>
+      <span style="background:rgba(255,255,255,0.15);padding:2px 10px;border-radius:10px;font-size:11px;">策略:MA20移动止盈</span>
+    </div>
+    <p style="margin:4px 0 0;font-size:11px;color:rgba(255,255,255,0.75);">→震荡 · MACD死叉/绿柱 · 峰值回撤0.0%</p>
+  </section>
+  <section style="padding:16px 16px 12px;background:#fff;">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px;">
+      <span style="font-size:26px;font-weight:800;color:#e53935;">$484.86</span>
+      <span style="font-size:14px;color:#e53935;">+0.67%</span>
+      <span style="font-size:12px;color:#999;">成本 $402.54</span>
+      <span style="font-size:13px;font-weight:600;color:#e53935;margin-left:auto;">+20.45%</span>
+    </div>
+    <div style="font-size:11px;color:#666;margin:-6px 0 10px;">持仓市值 <b style="color:#333;">$484.86</b> ≈ ¥3,276 · 盈亏 <b style="color:#e53935;">+$82.32</b> ≈ +¥556（汇率 USD/CNY = 6.7569）</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#e53935;">+0.67%</div>
+        <div style="font-size:10px;color:#999;">1日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#43a047;">-1.54%</div>
+        <div style="font-size:10px;color:#999;">5日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#e53935;">+24.22%</div>
+        <div style="font-size:10px;color:#999;">20日</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:8px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#e53935;">0元</div>
+        <div style="font-size:10px;color:#999;">主力净流入</div>
+      </div>
+    </div>
+    
+    <div style="background:#e8f5e9;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <strong style="font-size:13px;color:#2e7d32;">🎯 信号依据</strong>
+      <p style="margin:5px 0 0;font-size:12px;color:#444;line-height:1.6;">剩余仓位跟随趋势，站上MA20(463.06)，持有以待移动止盈</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#777;">站上2/4条均线(MA20=463.06) · 主力5日0元 · 量比0.2 · 换手0.0%</p>
+      <p style='margin:4px 0 0;font-size:11px;color:#777;'>PE(TTM) 27.0 · PB 0.00</p>
+    </div>
+    <div style="background:#fafafa;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <strong style="font-size:12px;color:#666;">🛡️ 止盈止损参考</strong>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;">
+        <div style="flex:1;"><span style="font-size:12px;color:#c62828;">静态止损</span><br><span style="font-size:15px;font-weight:700;color:#c62828;">$362.29</span><br><span style="font-size:10px;color:#999;">成本-10%</span></div>
+        <div style="flex:1;text-align:center;"><span style="font-size:12px;color:#e65100;">MA20止盈线</span><br><span style="font-size:15px;font-weight:700;color:#e65100;">$463.06</span><br><span style="font-size:10px;color:#999;">MA20</span></div>
+        <div style="flex:1;text-align:right;"><span style="font-size:12px;color:#2e7d32;">止盈</span><br><span style="font-size:15px;font-weight:700;color:#2e7d32;">$463.06</span><br><span style="font-size:10px;color:#999;">MA20移动止盈</span></div>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ddd;font-size:11px;color:#777;">
+        盈亏比 0.2:1 · 峰值跟踪 484.86(回撤+0.0%) · MA20=463.06 · MA60=418.68
+      </div>
+    </div>
+    <div style="background:#e8f5e9;border-radius:8px;padding:12px;">
+      <strong style="font-size:13px;color:#2e7d32;">💡 操作建议</strong>
+      <p style="margin:5px 0 0;font-size:12px;color:#444;line-height:1.6;"><strong>继续持有(移动止盈模式)</strong>：剩余仓位跟随趋势，站上MA20(463.06)，持有以待移动止盈。唯一离场线 MA20=463.06，跌破即全部止盈离场；静态止损362.29兜底，峰值回撤10%清仓。</p>
+    </div>
+  </section>
+  <footer style="text-align:center;padding:10px;font-size:10px;color:#999;background:#fafafa;">
+    数据来自腾讯自选股 · 2026-08-19 23:12 | 仅供参考，不构成投资建议 | 本分析由通达信AI智能体生成
+  </footer>
+</section></div>
+
+  
+
+  <div class="footer">
+    规则: 静态止损-10% · MA20移动止损 · 新高回撤10%清仓 · 高位放量滞涨/长上影/双顶减仓50%<br>
+    震荡小票止盈10/20/30%分批 · 趋势龙头浮盈20%减半 · 减仓后剩余仓位MA20移动止盈<br>
+    外币持仓按实时汇率折算人民币 · 数据来自腾讯自选股 · 仅供参考，不构成投资建议
+  </div>
+</div>
+<button class="trade-fab" onclick="openTrade()">💰</button>
+<button class="refresh-btn" onclick="location.reload()">🔄</button>
+
+<script type="application/json" id="portfolio-data">{"positions": [{"code": "sh688102", "name": "斯瑞新材", "market": "A股", "currency": "CNY", "cost_price": 37.12, "quantity": 1350.0, "strategy_type": "swing_small", "peak_price": 40.36, "current_price": 36.56, "ma20": 33.41, "fx_rate": 1.0, "pnl_pct": "-1.51%"}, {"code": "sz002384", "name": "东山精密", "market": "A股", "currency": "CNY", "cost_price": 188.41, "quantity": 300.0, "strategy_type": "trend_leader", "peak_price": 217.66, "current_price": 197.1, "ma20": 192.55, "fx_rate": 1.0, "pnl_pct": "+4.61%"}, {"code": "usAMD.OQ", "name": "超威半导体", "market": "美股", "currency": "USD", "cost_price": 490.25, "quantity": 1.0, "strategy_type": "trend_leader", "peak_price": 479.93, "current_price": 465.65, "ma20": 441.23, "fx_rate": 6.7569, "pnl_pct": "-5.02%"}, {"code": "usMSFT.OQ", "name": "微软", "market": "美股", "currency": "USD", "cost_price": 402.54, "quantity": 1.0, "strategy_type": "ma20_trail", "peak_price": 484.86, "current_price": 484.86, "ma20": 463.06, "fx_rate": 6.7569, "pnl_pct": "+20.45%"}], "fx": {"USDCNY": 6.7569, "HKDCNY": 0.8614, "updated_at": "2026-08-19 23:12", "note": "云端自动化运行时通过 open.er-api.com 更新"}}</script>
+<div class="trade-overlay" id="trade-overlay" onclick="if(event.target===this)closeTrade()">
+  <div class="trade-modal">
+    <h2>📊 交易录入 <button class="trade-close" onclick="closeTrade()">✕</button></h2>
+    <div class="ts"><span class="tl">选择持仓</span><div class="pos-list" id="pos-list"></div></div>
+    <div class="ts" id="new-fields" style="display:none">
+      <span class="tl">新增持仓信息</span>
+      <input class="ti" id="n-query" placeholder="输入代码或名称（如 sz002384 / 东山精密 / MSFT）" style="margin-bottom:4px" oninput="detectQuery()">
+      <div id="n-query-hint" style="font-size:11px;margin:0 0 8px 2px;display:none;"></div>
+      <select class="ti" id="n-market" style="margin-bottom:8px"><option value="A股">A股</option><option value="美股">美股</option><option value="港股">港股</option></select>
+      <select class="ti" id="n-strategy"><option value="trend_leader">趋势龙头(20%减半)</option><option value="swing_small">震荡小票(10/20/30分批)</option><option value="ma20_trail">MA20移动止盈</option></select>
+    </div>
+    <div class="ts" id="action-fields">
+      <span class="tl">交易方向</span>
+      <div class="act-toggle">
+        <div class="act-btn buy" data-act="buy" onclick="setAction('buy')">🔴 买入加仓</div>
+        <div class="act-btn sell selected" data-act="sell" onclick="setAction('sell')">🟢 卖出减仓</div>
+      </div>
+    </div>
+    <div class="ts"><span class="tl">成交价格</span><input type="number" class="ti" id="t-price" placeholder="输入实际成交价格" step="0.01"></div>
+    <div class="ts"><span class="tl">成交数量</span><input type="number" class="ti" id="t-qty" placeholder="输入成交数量" step="1"></div>
+    <button class="trade-submit" onclick="submitTrade()">确认交易并重新计算策略</button>
+    <div class="trade-result" id="trade-result"></div>
+    <button class="sync-btn" id="sync-btn" style="display:none" onclick="autoSendToAssistant()">📤 重新打开助手发送</button>
+    <div class="trade-note">交易后策略信号即时重算（基于当前价）<br>确认后将自动打开助手并携带指令，在助手中发送即可触发完整模型重跑</div>
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script>
+const DATA=JSON.parse(document.getElementById('portfolio-data').textContent);
+let selCode=null,selAction='sell',isNew=false,tradeLog=[];
+function openTrade(){renderPosList();document.getElementById('trade-overlay').classList.add('active');}
+function closeTrade(){document.getElementById('trade-overlay').classList.remove('active');}
+function curSym(c){return c==='USD'?'$':c==='HKD'?'HK$':'';}
+function pnlCol(p){try{const v=parseFloat(String(p).replace('%','').replace('+',''));return v>=0?'#e53935':'#43a047';}catch(e){return '#666';}}
+function renderPosList(){
+  const c=document.getElementById('pos-list');let h='';
+  DATA.positions.forEach(p=>{
+    const s=curSym(p.currency);const a=selCode===p.code&&!isNew?' selected':'';
+    const pc=pnlCol(p.pnl_pct);
+    h+=`<div class="pos-opt${a}" onclick="selPos('${p.code}')"><div style="flex:1"><div class="pn">${p.name}</div><div class="pi">${p.code} · ${p.market} · 成本${s}${p.cost_price.toFixed(2)} · ${p.quantity}股 · <span style="color:${pc};font-weight:600">${p.pnl_pct||'--'}</span></div></div></div>`;
+  });
+  h+=`<div class="pos-opt${isNew?' selected':''}" onclick="selNew()" style="border-style:dashed;justify-content:center;color:#1565c0;font-weight:600;font-size:14px;">+ 新增持仓</div>`;
+  c.innerHTML=h;
+}
+function selPos(code){selCode=code;isNew=false;document.getElementById('new-fields').style.display='none';document.getElementById('action-fields').style.display='block';renderPosList();}
+function selNew(){isNew=true;selCode=null;document.getElementById('new-fields').style.display='block';document.getElementById('action-fields').style.display='none';renderPosList();}
+function detectQuery(){
+  const v=document.getElementById('n-query').value.trim();
+  const h=document.getElementById('n-query-hint');
+  if(!v){h.style.display='none';return;}
+  const isCode=/^([a-zA-Z]{1,3})?\d{4,6}$/.test(v)||/^[a-zA-Z]{1,5}(\.[A-Z]{1,3})?$/.test(v)||/^\d{4,5}$/.test(v);
+  if(isCode){h.style.display='block';h.style.color='#2e7d32';h.innerHTML='✅ 检测到代码格式，同步后将自动搜索匹配名称';}
+  else{h.style.display='block';h.style.color='#1565c0';h.innerHTML='✅ 检测到名称，同步后将自动搜索匹配代码';}
+}
+function setAction(act){selAction=act;document.querySelectorAll('.act-btn').forEach(b=>b.classList.toggle('selected',b.dataset.act===act));}
+function submitTrade(){
+  const price=parseFloat(document.getElementById('t-price').value);
+  const qty=parseFloat(document.getElementById('t-qty').value);
+  if(!price||price<=0){alert('请输入有效的成交价格');return;}
+  if(!qty||qty<=0){alert('请输入有效的成交数量');return;}
+  if(isNew){
+    const query=document.getElementById('n-query').value.trim();
+    const market=document.getElementById('n-market').value;
+    const strategy=document.getElementById('n-strategy').value;
+    if(!query){alert('请输入股票代码或名称');return;}
+    const isCode=/^([a-zA-Z]{1,3})?\d{4,6}$/.test(query)||/^[a-zA-Z]{1,5}(\.[A-Z]{1,3})?$/.test(query)||/^\d{4,5}$/.test(query);
+    const label=isCode?'代码':'名称';
+    const cmd=`新增持仓：${label}${query} 成本${price} 数量${qty}股 市场预判${market} 策略${strategy}。请搜索确认标的代码和名称后添加到portfolio.json并重新运行策略引擎和重新部署站点。`;
+    tradeLog.push({type:'new',query,isCode,market,strategy,price,qty,cmd});
+    showNewResult(query,isCode,price,qty,strategy);
+    document.getElementById('sync-btn').style.display='block';
+    openAssistant(cmd);
+    return;
+  }
+  if(!selCode){alert('请先选择持仓');return;}
+  const pos=DATA.positions.find(p=>p.code===selCode);
+  if(!pos)return;
+  let newCost,newQty;
+  if(selAction==='buy'){
+    newQty=pos.quantity+qty;
+    newCost=(pos.cost_price*pos.quantity+price*qty)/newQty;
+  }else{
+    newQty=pos.quantity-qty;
+    if(newQty<=0){newQty=0;newCost=0;}
+    else newCost=(pos.cost_price*pos.quantity-price*qty)/newQty;
+  }
+  const a=recalc(pos,newCost,newQty>0?price:pos.current_price,newQty);
+  pos.cost_price=newCost;pos.quantity=newQty;
+  if(price>pos.peak_price)pos.peak_price=price;
+  pos.current_price=price;
+  pos.pnl_pct=(a.profitPct>=0?'+':'')+a.profitPct.toFixed(2)+'%';
+  let cmd;
+  if(newQty<=0){
+    cmd=`交易同步：${pos.name}(${pos.code}) 清仓 ${qty}股@${price}。请更新portfolio.json中该持仓quantity=0并重新运行策略引擎和重新部署站点。`;
+  }else{
+    const actTxt=selAction==='buy'?'买入加仓':'卖出减仓';
+    const stratNote=selAction==='sell'&&newQty>0&&pos.strategy_type!=='ma20_trail'?'（建议切换为ma20_trail移动止盈策略）':'';
+    cmd=`交易同步：${pos.name}(${pos.code}) ${actTxt} ${qty}股@${price}，新移动成本${newCost.toFixed(2)}，剩余${newQty}股${stratNote}。请更新portfolio.json中cost_price=${newCost.toFixed(2)}、quantity=${newQty}并重新运行策略引擎和重新部署站点。`;
+  }
+  tradeLog.push({type:'trade',code:pos.code,name:pos.name,action:selAction,price,qty,newCost,newQty,cmd});
+  showResult(pos,a);
+  document.getElementById('sync-btn').style.display='block';
+  openAssistant(cmd);
+  updateTotals();
+  renderPosList();
+}
+function recalc(pos,cost,price,qty){
+  if(qty<=0||cost<=0){return{signal:'✅已清仓',signalColor:'#2e7d32',signalBg:'#e8f5e9',profitPct:0,stopPrice:0,tpPrice:0,tpTxt:'—',ma20:0,sym:'',cost:0};}
+  const profitPct=(price-cost)/cost*100;
+  const stopPrice=cost*0.9;
+  const ma20=pos.ma20;
+  const peak=Math.max(pos.peak_price,price);
+  const ddFromPeak=(price-peak)/peak*100;
+  const isTrail=pos.strategy_type==='ma20_trail';
+  const sym=curSym(pos.currency);
+  let tpPrice,tpTxt;
+  if(isTrail){tpPrice=ma20;tpTxt='MA20止盈线';}
+  else if(pos.strategy_type==='trend_leader'){tpPrice=cost*1.2;tpTxt='+20%减50%';}
+  else{tpPrice=cost*1.1;tpTxt='+10%卖1/3';}
+  let signal,signalColor,signalBg;
+  if(profitPct<=-10){signal='🔴止损';signalColor='#c62828';signalBg='#ffebee';}
+  else if(ddFromPeak<=-10){signal='🔴清仓';signalColor='#b71c1c';signalBg='#ffcdd2';}
+  else if(ma20>0&&price<ma20&&(isTrail||profitPct>0)){signal=isTrail?'🔴止盈离场':'🔴止损';signalColor='#c62828';signalBg='#ffebee';}
+  else if(!isTrail&&profitPct>=(pos.strategy_type==='trend_leader'?20:10)){signal='🟡减仓';signalColor='#f9a825';signalBg='#fff8e1';}
+  else{signal='🟢持有';signalColor='#2e7d32';signalBg='#e8f5e9';}
+  return{signal,signalColor,signalBg,profitPct,stopPrice,tpPrice,tpTxt,ma20,peak,ddFromPeak,sym,cost};
+}
+function showResult(pos,a){
+  const r=document.getElementById('trade-result');r.classList.add('active');
+  if(pos.quantity<=0){
+    const t=tradeLog[tradeLog.length-1];
+    r.innerHTML=`<div class="rs-sig" style="background:#e8f5e9;color:#2e7d32;">✅ 已清仓</div><div class="rs-row"><span class="rs-l">标的</span><span class="rs-v">${pos.name} (${pos.code})</span></div><div class="rs-row"><span class="rs-l">清仓价格</span><span class="rs-v">${a.sym}${t.price.toFixed(2)}</span></div><div class="rs-row"><span class="rs-l">成交数量</span><span class="rs-v">${t.qty}股</span></div>`;
+    return;
+  }
+  const pc=a.profitPct>=0?'#e53935':'#43a047';
+  r.innerHTML=`<div class="rs-sig" style="background:${a.signalBg};color:${a.signalColor};">${a.signal}</div>
+    <div class="rs-row"><span class="rs-l">标的</span><span class="rs-v">${pos.name} (${pos.code})</span></div>
+    <div class="rs-row"><span class="rs-l">新移动成本</span><span class="rs-v">${a.sym}${a.cost.toFixed(2)}</span></div>
+    <div class="rs-row"><span class="rs-l">剩余数量</span><span class="rs-v">${pos.quantity}股</span></div>
+    <div class="rs-row"><span class="rs-l">当前价格</span><span class="rs-v">${a.sym}${pos.current_price.toFixed(2)}</span></div>
+    <div class="rs-row"><span class="rs-l">浮盈浮亏</span><span class="rs-v" style="color:${pc}">${a.profitPct>=0?'+':''}${a.profitPct.toFixed(2)}%</span></div>
+    <div class="rs-row"><span class="rs-l">静态止损(成本-10%)</span><span class="rs-v" style="color:#c62828">${a.sym}${a.stopPrice.toFixed(2)}</span></div>
+    <div class="rs-row"><span class="rs-l">MA20止盈/止损</span><span class="rs-v" style="color:#e65100">${a.sym}${a.ma20.toFixed(2)}</span></div>
+    <div class="rs-row"><span class="rs-l">止盈位</span><span class="rs-v" style="color:#2e7d32">${a.sym}${a.tpPrice.toFixed(2)} (${a.tpTxt})</span></div>`;
+}
+function showNewResult(query,isCode,price,qty,strategy){
+  const r=document.getElementById('trade-result');r.classList.add('active');
+  const stratName={'trend_leader':'趋势龙头','swing_small':'震荡小票','ma20_trail':'MA20移动止盈'}[strategy]||strategy;
+  const inputLabel=isCode?'输入代码':'输入名称';
+  const autoLabel=isCode?'匹配名称':'匹配代码';
+  r.innerHTML=`<div class="rs-sig" style="background:#e3f2fd;color:#1565c0;">📝 新增持仓待确认</div>
+    <div class="rs-row"><span class="rs-l">${inputLabel}</span><span class="rs-v">${query}</span></div>
+    <div class="rs-row"><span class="rs-l">${autoLabel}</span><span class="rs-v" style="color:#999;">⏳ 同步后自动搜索确认</span></div>
+    <div class="rs-row"><span class="rs-l">买入价格</span><span class="rs-v">${price.toFixed(2)}</span></div>
+    <div class="rs-row"><span class="rs-l">买入数量</span><span class="rs-v">${qty}股</span></div>
+    <div class="rs-row"><span class="rs-l">策略类型</span><span class="rs-v">${stratName}</span></div>
+    <div class="rs-row"><span class="rs-l">静态止损(成本-10%)</span><span class="rs-v" style="color:#c62828">${(price*0.9).toFixed(2)}</span></div>
+    <p style="font-size:12px;color:#999;margin-top:10px;line-height:1.6;">助手已自动打开并携带指令，在助手中发送即可自动搜索匹配并完成持仓添加。</p>`;
+}
+function showSyncButton(){
+  const btn=document.getElementById('sync-btn');
+  btn.style.display='block';
+  autoCopyInstruction();
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+function buildSyncCmd(){
+  if(tradeLog.length===0)return '';
+  if(tradeLog.length>1){
+    return '交易同步（多条）：\n'+tradeLog.map(t=>t.cmd.replace(/^交易同步：|^新增持仓：/,'')).join('\n')+'\n请一并更新portfolio.json并重新运行策略引擎和重新部署站点。';
+  }
+  return tradeLog[0].cmd;
+}
+function autoCopyInstruction(){
+  const cmd=buildSyncCmd();
+  if(!cmd)return;
+  const btn=document.getElementById('sync-btn');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(cmd).then(()=>{
+      showToast('✅ 指令已自动复制');
+    }).catch(()=>{});
+  }else{
+    const ta=document.createElement('textarea');ta.value=cmd;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');showToast('✅ 指令已自动复制');}catch(e){}
+    document.body.removeChild(ta);
+  }
+}
+function autoSendToAssistant(){
+  const cmd=buildSyncCmd();
+  if(!cmd){showToast('⚠️ 没有待同步的交易');return;}
+  openAssistant(cmd);
+}
+function fallbackCopyAndOpen(cmd,btn){
+  const ta=document.createElement('textarea');ta.value=cmd;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  document.body.removeChild(ta);
+  openAssistant(cmd);
+}
+function openAssistant(cmd){
+  if(!cmd)return;
+  const btn=document.getElementById('sync-btn');
+  // 同步打开助手（在用户手势内执行，避免弹窗拦截）+ URL携带指令自动填充
+  const url='https://www.workbuddy.cn/?q='+encodeURIComponent(cmd);
+  let opened=false;
+  try{const w=window.open(url,'_blank');opened=!!w;}catch(e){}
+  // 异步复制指令到剪贴板（URL参数的备份方案）
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(cmd).then(()=>{
+      showToast(opened?'✅ 指令已复制，助手已打开':'✅ 指令已复制，请打开助手粘贴发送');
+    }).catch(()=>{});
+  }else{
+    const ta=document.createElement('textarea');ta.value=cmd;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}
+    document.body.removeChild(ta);
+  }
+  if(btn){btn.classList.add('copied');btn.textContent=opened?'✅ 助手已打开，指令已复制':'📤 再次发送 / 重新复制';}
+  showToast(opened?'📤 正在打开助手，指令已复制':'✅ 指令已复制，请打开助手粘贴发送');
+  setTimeout(()=>{if(btn){btn.classList.remove('copied');btn.textContent='📤 重新打开助手发送';}},3000);
+}
+function copySync(){
+  const cmd=buildSyncCmd();
+  if(!cmd)return;
+  const btn=document.getElementById('sync-btn');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(cmd).then(()=>showCopied(btn)).catch(()=>fallbackCopy(cmd,btn));
+  }else{fallbackCopy(cmd,btn);}
+}
+function updateTotals(){
+  let tm=0,tc=0;
+  DATA.positions.forEach(p=>{
+    if(p.quantity>0&&p.current_price>0){tm+=p.current_price*p.quantity*p.fx_rate;tc+=p.cost_price*p.quantity*p.fx_rate;}
+  });
+  const pnl=tm-tc;const pct=tc>0?(pnl/tc*100):0;const col=pnl>=0?'#e53935':'#43a047';
+  const el=document.getElementById('total-mkt');
+  if(el){el.textContent='¥'+tm.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});el.style.color=col;}
+  const ec=document.getElementById('total-cost');
+  if(ec)ec.textContent='总成本 ¥'+tc.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const ep=document.getElementById('total-pnl');
+  if(ep){ep.textContent=(pnl>=0?'+':'')+pnl.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});ep.style.color=col;}
+  const epct=document.getElementById('total-pnl-pct');
+  if(epct){epct.textContent=(pct>=0?'+':'')+pct.toFixed(2)+'%';epct.style.color=col;}
+}
+</script>
+</body>
+</html>
