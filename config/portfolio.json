@@ -2,9 +2,9 @@
   "version": "2.2",
   "updated_at": "2026-08-20",
   "fx": {
-    "USDCNY": 6.7461,
-    "HKDCNY": 0.8604,
-    "updated_at": "2026-08-20 19:04",
+    "USDCNY": 6.7569,
+    "HKDCNY": 0.8614,
+    "updated_at": "2026-08-19 23:12",
     "note": "云端自动化运行时通过 open.er-api.com 更新"
   },
   "alert_schedule": {
@@ -78,12 +78,12 @@
       "code": "sz002384",
       "name": "东山精密",
       "market": "A股",
-      "cost_price": 188.41,
-      "quantity": 300,
-      "strategy_type": "trend_leader",
+      "cost_price": 169.29,
+      "quantity": 100,
+      "strategy_type": "ma20_trail",
       "peak_price": 217.66,
       "buy_reason": "",
-      "note": "PCB/算力主线龙头，市值3986亿"
+      "note": "PCB/算力主线龙头，8/20减仓200股@197.97止盈，剩余100股移动成本169.29，切换MA20移动止盈"
     },
     {
       "code": "sh688102",
@@ -104,7 +104,7 @@
       "cost_price": 402.54,
       "quantity": 1,
       "strategy_type": "ma20_trail",
-      "peak_price": 486.44,
+      "peak_price": 484.86,
       "buy_reason": "",
       "note": "科技龙头，8/17已减仓1股止盈，剩余1股移动成本402.54，切换MA20移动止盈"
     },
