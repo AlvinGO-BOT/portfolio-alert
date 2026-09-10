@@ -1,10 +1,10 @@
 {
   "version": "2.2",
-  "updated_at": "2026-09-09",
+  "updated_at": "2026-09-10",
   "fx": {
     "USDCNY": 6.7283,
     "HKDCNY": 0.8581,
-    "updated_at": "2026-09-09 18:22",
+    "updated_at": "2026-09-10 08:18",
     "note": "云端自动化运行时通过 open.er-api.com 更新"
   },
   "alert_schedule": {
@@ -116,7 +116,7 @@
       "cost_price": 490.25,
       "quantity": 1,
       "strategy_type": "trend_leader",
-      "peak_price": 505.74,
+      "peak_price": 521.1,
       "buy_reason": "",
       "note": "AI芯片龙头，2026年YTD涨幅+124%，PE 123"
     }
