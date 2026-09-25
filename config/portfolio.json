@@ -4,7 +4,7 @@
   "fx": {
     "USDCNY": 6.7173,
     "HKDCNY": 0.8565,
-    "updated_at": "2026-09-25 17:18",
+    "updated_at": "2026-09-25 23:11",
     "note": "云端自动化运行时通过 open.er-api.com 更新"
   },
   "alert_schedule": {
@@ -104,7 +104,7 @@
       "cost_price": 402.54,
       "quantity": 1,
       "strategy_type": "ma20_trail",
-      "peak_price": 513.53,
+      "peak_price": 515.94,
       "buy_reason": "",
       "note": "科技龙头，8/17已减仓1股止盈，剩余1股移动成本402.54，切换MA20移动止盈"
     },
@@ -116,7 +116,7 @@
       "cost_price": 490.25,
       "quantity": 1,
       "strategy_type": "trend_leader",
-      "peak_price": 629.26,
+      "peak_price": 632.87,
       "buy_reason": "",
       "note": "AI芯片龙头，2026年YTD涨幅+124%，PE 123"
     }
