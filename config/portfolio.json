@@ -1,10 +1,10 @@
 {
   "version": "2.2",
-  "updated_at": "2026-11-04",
+  "updated_at": "2026-11-05",
   "fx": {
     "USDCNY": 6.684,
     "HKDCNY": 0.8519,
-    "updated_at": "2026-11-04 19:48",
+    "updated_at": "2026-11-05 01:57",
     "note": "云端自动化运行时通过 open.er-api.com 更新"
   },
   "alert_schedule": {
@@ -104,7 +104,7 @@
       "cost_price": 402.54,
       "quantity": 1,
       "strategy_type": "ma20_trail",
-      "peak_price": 546.09,
+      "peak_price": 553.87,
       "buy_reason": "",
       "note": "科技龙头，8/17已减仓1股止盈，剩余1股移动成本402.54，切换MA20移动止盈"
     },
