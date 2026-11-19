@@ -2,9 +2,9 @@
   "version": "2.2",
   "updated_at": "2026-11-19",
   "fx": {
-    "USDCNY": 6.6799,
-    "HKDCNY": 0.8514,
-    "updated_at": "2026-11-19 02:48",
+    "USDCNY": 6.6808,
+    "HKDCNY": 0.8515,
+    "updated_at": "2026-11-19 14:33",
     "note": "云端自动化运行时通过 open.er-api.com 更新"
   },
   "alert_schedule": {
